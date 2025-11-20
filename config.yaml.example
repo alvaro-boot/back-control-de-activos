@@ -1,0 +1,27 @@
+# Configuración del Sistema de Control de Activos
+# Copia este archivo a config.yaml y ajusta los valores según tu entorno
+
+# Configuración del servidor
+server:
+  port: 3000
+  nodeEnv: development # development | production
+
+# Configuración de la base de datos MySQL
+database:
+  host: localhost
+  port: 3306
+  username: root
+  password: ""
+  database: control_activos
+
+# Configuración de JWT
+jwt:
+  secret: "cambiar-este-secret-en-produccion"
+  expiresIn: "1h"
+  refreshSecret: "cambiar-este-refresh-secret-en-produccion"
+  refreshExpiresIn: "7d"
+
+# Configuración de QR
+qr:
+  baseUrl: "http://localhost:3000/qr/activo"
+
