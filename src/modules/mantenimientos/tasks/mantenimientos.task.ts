@@ -1,19 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { MantenimientosService } from '../mantenimientos.service';
+import { MantenimientosProgramadosService } from '../../mantenimientos-programados/mantenimientos-programados.service';
 
 @Injectable()
 export class MantenimientosTask {
   private readonly logger = new Logger(MantenimientosTask.name);
 
-  constructor(private readonly mantenimientosService: MantenimientosService) {}
+  constructor(
+    private readonly mantenimientosProgramadosService: MantenimientosProgramadosService,
+  ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_9AM)
   async handleMantenimientosProximos() {
-    this.logger.log('Revisando mantenimientos próximos...');
+    this.logger.log('Revisando mantenimientos programados próximos...');
     
     try {
-      const mantenimientos = await this.mantenimientosService.getMantenimientosProximos(7);
+      const mantenimientos = await this.mantenimientosProgramadosService.getProximos(7);
       
       if (mantenimientos.length > 0) {
         this.logger.log(

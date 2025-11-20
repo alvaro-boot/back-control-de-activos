@@ -46,14 +46,6 @@ export class MantenimientosController {
     );
   }
 
-  @Get('proximos')
-  @ApiOperation({ summary: 'Obtener mantenimientos próximos' })
-  @ApiResponse({ status: 200, description: 'Mantenimientos próximos' })
-  getProximos(@Query('dias') dias?: string) {
-    return this.mantenimientosService.getMantenimientosProximos(
-      dias ? parseInt(dias, 10) : 7,
-    );
-  }
 
   @Get('historial/activo/:activoId')
   @ApiOperation({ summary: 'Obtener historial de mantenimientos de un activo' })

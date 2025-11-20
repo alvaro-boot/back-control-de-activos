@@ -32,8 +32,11 @@ export class ActivosController {
   @Roles('administrador', 'tecnico')
   @ApiOperation({ summary: 'Crear nuevo activo' })
   @ApiResponse({ status: 201, description: 'Activo creado' })
-  create(@Body() createActivoDto: CreateActivoDto) {
-    return this.activosService.create(createActivoDto);
+  create(
+    @Body() createActivoDto: CreateActivoDto,
+    @CurrentUser() user: any,
+  ) {
+    return this.activosService.create(createActivoDto, user.id);
   }
 
   @Get()
@@ -64,8 +67,9 @@ export class ActivosController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateActivoDto: UpdateActivoDto,
+    @CurrentUser() user: any,
   ) {
-    return this.activosService.update(id, updateActivoDto);
+    return this.activosService.update(id, updateActivoDto, user.id);
   }
 
   @Delete(':id')

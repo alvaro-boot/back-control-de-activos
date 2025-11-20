@@ -4,10 +4,11 @@ import {
   IsString,
   IsDateString,
   IsEnum,
+  IsNumber,
   IsOptional,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { EstadoMantenimiento } from '../entities/mantenimiento.entity';
+import { TipoMantenimiento } from '../entities/mantenimiento.entity';
 
 export class CreateMantenimientoDto {
   @ApiProperty({ example: 1 })
@@ -20,23 +21,23 @@ export class CreateMantenimientoDto {
   @IsNotEmpty()
   tecnicoId: number;
 
-  @ApiProperty({ example: 'Mantenimiento preventivo de limpieza' })
-  @IsString()
+  @ApiProperty({ example: 'preventivo', enum: TipoMantenimiento })
+  @IsEnum(TipoMantenimiento)
   @IsNotEmpty()
-  descripcion: string;
+  tipo: TipoMantenimiento;
+
+  @ApiProperty({ example: 'Limpieza y revisión general del equipo', required: false })
+  @IsString()
+  @IsOptional()
+  notas?: string;
 
   @ApiProperty({ example: '2024-02-15' })
   @IsDateString()
   @IsNotEmpty()
-  fechaProgramada: string;
+  fechaMantenimiento: string;
 
-  @ApiProperty({
-    example: 'programado',
-    enum: EstadoMantenimiento,
-    required: false,
-  })
-  @IsEnum(EstadoMantenimiento)
+  @ApiProperty({ example: 50000, required: false })
+  @IsNumber()
   @IsOptional()
-  estado?: EstadoMantenimiento;
+  costo?: number;
 }
-

@@ -13,11 +13,18 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsuariosModule } from './modules/usuarios/usuarios.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { EmpresasModule } from './modules/empresas/empresas.module';
+import { SedesModule } from './modules/sedes/sedes.module';
 import { AreasModule } from './modules/areas/areas.module';
-import { EmpleadosModule } from './modules/empleados/empleados.module';
+import { CategoriasModule } from './modules/categorias/categorias.module';
 import { ActivosModule } from './modules/activos/activos.module';
-import { AsignacionesModule } from './modules/asignaciones/asignaciones.module';
+import { ActivosQrModule } from './modules/activos-qr/activos-qr.module';
+import { HistorialActivosModule } from './modules/historial-activos/historial-activos.module';
 import { MantenimientosModule } from './modules/mantenimientos/mantenimientos.module';
+import { MantenimientosProgramadosModule } from './modules/mantenimientos-programados/mantenimientos-programados.module';
+import { GarantiasModule } from './modules/garantias/garantias.module';
+import { ProveedoresModule } from './modules/proveedores/proveedores.module';
+import { ActivosProveedoresModule } from './modules/activos-proveedores/activos-proveedores.module';
+import { DepreciacionActivosModule } from './modules/depreciacion-activos/depreciacion-activos.module';
 
 @Module({
   imports: [
@@ -48,11 +55,18 @@ import { MantenimientosModule } from './modules/mantenimientos/mantenimientos.mo
     UsuariosModule,
     RolesModule,
     EmpresasModule,
+    SedesModule,
     AreasModule,
-    EmpleadosModule,
+    CategoriasModule,
     ActivosModule,
-    AsignacionesModule,
+    ActivosQrModule,
+    HistorialActivosModule,
     MantenimientosModule,
+    MantenimientosProgramadosModule,
+    GarantiasModule,
+    ProveedoresModule,
+    ActivosProveedoresModule,
+    DepreciacionActivosModule,
   ],
 })
 export class AppModule {}

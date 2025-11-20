@@ -5,12 +5,12 @@ export class CreateAreaDto {
   @ApiProperty({ example: 1 })
   @IsInt()
   @IsNotEmpty()
-  empresaId: number;
+  sedeId: number;
 
   @ApiProperty({ example: 'Recursos Humanos' })
   @IsString()
   @IsNotEmpty()
-  @MaxLength(100)
+  @MaxLength(150)
   nombre: string;
 }
 

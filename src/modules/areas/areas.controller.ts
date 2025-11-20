@@ -37,14 +37,10 @@ export class AreasController {
   @Get()
   @ApiOperation({ summary: 'Obtener todas las áreas' })
   @ApiResponse({ status: 200, description: 'Lista de áreas' })
-  findAll(
-    @Query('empresaId') empresaId?: string,
-    @CurrentUser() user?: any,
-  ) {
-    const empresaIdFilter = empresaId
-      ? parseInt(empresaId, 10)
-      : user?.empresaId;
-    return this.areasService.findAll(empresaIdFilter);
+  findAll(@Query('sedeId') sedeId?: string) {
+    return this.areasService.findAll(
+      sedeId ? parseInt(sedeId, 10) : undefined,
+    );
   }
 
   @Get(':id')

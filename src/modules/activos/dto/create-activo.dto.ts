@@ -17,48 +17,60 @@ export class CreateActivoDto {
   @IsNotEmpty()
   empresaId: number;
 
-  @ApiProperty({ example: 'Laptop Dell', required: false })
+  @ApiProperty({ example: 'ACT-001' })
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
+  @MaxLength(50)
+  codigo: string;
+
+  @ApiProperty({ example: 'Laptop Dell Latitude 5520' })
+  @IsString()
+  @IsNotEmpty()
   @MaxLength(150)
-  nombre?: string;
+  nombre: string;
 
-  @ApiProperty({ example: 'Computador', required: false })
+  @ApiProperty({ example: 'Laptop empresarial para desarrollo', required: false })
   @IsString()
   @IsOptional()
-  @MaxLength(100)
-  tipo?: string;
+  descripcion?: string;
 
-  @ApiProperty({ example: 'Dell', required: false })
-  @IsString()
+  @ApiProperty({ example: 1, required: false })
+  @IsInt()
   @IsOptional()
-  @MaxLength(100)
-  marca?: string;
+  categoriaId?: number;
 
-  @ApiProperty({ example: 'Latitude 5520', required: false })
-  @IsString()
+  @ApiProperty({ example: 1, required: false })
+  @IsInt()
   @IsOptional()
-  @MaxLength(100)
-  modelo?: string;
+  sedeId?: number;
 
-  @ApiProperty({ example: 'SN123456789', required: false })
-  @IsString()
+  @ApiProperty({ example: 1, required: false })
+  @IsInt()
   @IsOptional()
-  @MaxLength(150)
-  numeroSerie?: string;
+  areaId?: number;
 
-  @ApiProperty({ example: 1500000, required: false })
-  @IsNumber()
+  @ApiProperty({ example: 1, required: false })
+  @IsInt()
   @IsOptional()
-  valor?: number;
+  responsableId?: number;
 
   @ApiProperty({ example: '2024-01-15', required: false })
   @IsDateString()
   @IsOptional()
   fechaCompra?: string;
 
+  @ApiProperty({ example: 1500000, required: false })
+  @IsNumber()
+  @IsOptional()
+  valorCompra?: number;
+
+  @ApiProperty({ example: 1350000, required: false })
+  @IsNumber()
+  @IsOptional()
+  valorActual?: number;
+
   @ApiProperty({
-    example: 'operativo',
+    example: 'activo',
     enum: EstadoActivo,
     required: false,
   })
@@ -66,4 +78,3 @@ export class CreateActivoDto {
   @IsOptional()
   estado?: EstadoActivo;
 }
-

@@ -68,37 +68,60 @@ export class QrController {
             font-weight: bold;
             margin-top: 5px;
           }
-          .operativo { background: #d4edda; color: #155724; }
+          .activo { background: #d4edda; color: #155724; }
           .mantenimiento { background: #fff3cd; color: #856404; }
-          .baja { background: #f8d7da; color: #721c24; }
+          .retirado { background: #f8d7da; color: #721c24; }
+          .perdido { background: #f8d7da; color: #721c24; }
         </style>
       </head>
       <body>
         <div class="container">
-          <h1>Activo #${activo.id}</h1>
+          <h1>Activo ${activo.codigo || '#' + activo.id}</h1>
+          <div class="info-row">
+            <div class="label">Código:</div>
+            <div class="value">${activo.codigo || 'N/A'}</div>
+          </div>
           <div class="info-row">
             <div class="label">Nombre:</div>
             <div class="value">${activo.nombre || 'N/A'}</div>
           </div>
+          ${activo.descripcion ? `
           <div class="info-row">
-            <div class="label">Tipo:</div>
-            <div class="value">${activo.tipo || 'N/A'}</div>
+            <div class="label">Descripción:</div>
+            <div class="value">${activo.descripcion}</div>
+          </div>
+          ` : ''}
+          ${activo.categoria ? `
+          <div class="info-row">
+            <div class="label">Categoría:</div>
+            <div class="value">${activo.categoria.nombre}</div>
+          </div>
+          ` : ''}
+          ${activo.sede ? `
+          <div class="info-row">
+            <div class="label">Sede:</div>
+            <div class="value">${activo.sede.nombre}</div>
+          </div>
+          ` : ''}
+          ${activo.area ? `
+          <div class="info-row">
+            <div class="label">Área:</div>
+            <div class="value">${activo.area.nombre}</div>
+          </div>
+          ` : ''}
+          ${activo.responsable ? `
+          <div class="info-row">
+            <div class="label">Responsable:</div>
+            <div class="value">${activo.responsable.nombreCompleto}</div>
+          </div>
+          ` : ''}
+          <div class="info-row">
+            <div class="label">Valor de Compra:</div>
+            <div class="value">$${activo.valorCompra ? activo.valorCompra.toLocaleString() : 'N/A'}</div>
           </div>
           <div class="info-row">
-            <div class="label">Marca:</div>
-            <div class="value">${activo.marca || 'N/A'}</div>
-          </div>
-          <div class="info-row">
-            <div class="label">Modelo:</div>
-            <div class="value">${activo.modelo || 'N/A'}</div>
-          </div>
-          <div class="info-row">
-            <div class="label">Número de Serie:</div>
-            <div class="value">${activo.numeroSerie || 'N/A'}</div>
-          </div>
-          <div class="info-row">
-            <div class="label">Valor:</div>
-            <div class="value">$${activo.valor ? activo.valor.toLocaleString() : 'N/A'}</div>
+            <div class="label">Valor Actual:</div>
+            <div class="value">$${activo.valorActual ? activo.valorActual.toLocaleString() : 'N/A'}</div>
           </div>
           <div class="info-row">
             <div class="label">Fecha de Compra:</div>
@@ -112,6 +135,12 @@ export class QrController {
           <div class="info-row">
             <div class="label">Empresa:</div>
             <div class="value">${activo.empresa.nombre}</div>
+          </div>
+          ` : ''}
+          ${activo.fechaCompra ? `
+          <div class="info-row">
+            <div class="label">Fecha de Compra:</div>
+            <div class="value">${new Date(activo.fechaCompra).toLocaleDateString('es-ES')}</div>
           </div>
           ` : ''}
         </div>

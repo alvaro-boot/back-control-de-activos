@@ -17,18 +17,18 @@ export class AreasService {
     return this.areaRepository.save(area);
   }
 
-  async findAll(empresaId?: number): Promise<Area[]> {
-    const where = empresaId ? { empresaId } : {};
+  async findAll(sedeId?: number): Promise<Area[]> {
+    const where = sedeId ? { sedeId } : {};
     return this.areaRepository.find({
       where,
-      relations: ['empresa', 'empleados'],
+      relations: ['sede', 'sede.empresa', 'usuarios', 'activos'],
     });
   }
 
   async findOne(id: number): Promise<Area> {
     const area = await this.areaRepository.findOne({
       where: { id },
-      relations: ['empresa', 'empleados'],
+      relations: ['sede', 'sede.empresa', 'usuarios', 'activos'],
     });
 
     if (!area) {

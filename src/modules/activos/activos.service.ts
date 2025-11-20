@@ -1,40 +1,70 @@
 import {
   Injectable,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
-import * as QRCode from 'qrcode';
-import * as fs from 'fs';
-import * as path from 'path';
 import { Activo, EstadoActivo } from './entities/activo.entity';
 import { CreateActivoDto } from './dto/create-activo.dto';
 import { UpdateActivoDto } from './dto/update-activo.dto';
+import { ActivosQrService } from '../activos-qr/activos-qr.service';
+import { HistorialActivosService } from '../historial-activos/historial-activos.service';
 
 @Injectable()
 export class ActivosService {
-  private readonly qrDirectory = path.join(process.cwd(), 'uploads', 'qr');
-
   constructor(
     @InjectRepository(Activo)
     private activoRepository: Repository<Activo>,
-    private configService: ConfigService,
-  ) {
-    // Asegurar que el directorio de QR existe
-    if (!fs.existsSync(this.qrDirectory)) {
-      fs.mkdirSync(this.qrDirectory, { recursive: true });
-    }
-  }
+    private activosQrService: ActivosQrService,
+    private historialActivosService: HistorialActivosService,
+  ) {}
 
-  async create(createActivoDto: CreateActivoDto): Promise<Activo> {
-    const activo = this.activoRepository.create(createActivoDto);
+  async create(
+    createActivoDto: CreateActivoDto,
+    usuarioId: number,
+  ): Promise<Activo> {
+    // Verificar que el código no exista
+    const existingActivo = await this.activoRepository.findOne({
+      where: { codigo: createActivoDto.codigo },
+    });
+
+    if (existingActivo) {
+      throw new BadRequestException(
+        `El código ${createActivoDto.codigo} ya está en uso`,
+      );
+    }
+
+    const activo = this.activoRepository.create({
+      ...createActivoDto,
+      fechaCompra: createActivoDto.fechaCompra
+        ? new Date(createActivoDto.fechaCompra)
+        : null,
+      estado: createActivoDto.estado || EstadoActivo.ACTIVO,
+    });
+
     const savedActivo = await this.activoRepository.save(activo);
 
-    // Generar QR después de crear el activo
-    await this.generateQR(savedActivo.id);
+    // Generar QR
+    try {
+      await this.activosQrService.generateQR(savedActivo.id);
+    } catch (error) {
+      console.error('Error al generar QR:', error);
+    }
 
-    // Recargar con el QR actualizado
+    // Registrar en historial
+    try {
+      await this.historialActivosService.create({
+        activoId: savedActivo.id,
+        usuarioId,
+        accion: 'Creación de activo',
+        descripcion: `Activo creado con código ${savedActivo.codigo}`,
+        estadoNuevo: savedActivo.estado,
+      });
+    } catch (error) {
+      console.error('Error al registrar historial:', error);
+    }
+
     return this.findOne(savedActivo.id);
   }
 
@@ -42,8 +72,19 @@ export class ActivosService {
     const where = empresaId ? { empresaId } : {};
     return this.activoRepository.find({
       where,
-      relations: ['empresa', 'asignaciones', 'mantenimientos'],
-      order: { id: 'DESC' },
+      relations: [
+        'empresa',
+        'categoria',
+        'sede',
+        'area',
+        'responsable',
+        'responsable.rol',
+        'qr',
+        'mantenimientos',
+        'mantenimientosProgramados',
+        'garantias',
+      ],
+      order: { creadoEn: 'DESC' },
     });
   }
 
@@ -52,11 +93,25 @@ export class ActivosService {
       where: { id },
       relations: [
         'empresa',
-        'asignaciones',
-        'asignaciones.empleado',
-        'asignaciones.entregadoPor',
+        'categoria',
+        'sede',
+        'sede.empresa',
+        'area',
+        'area.sede',
+        'responsable',
+        'responsable.rol',
+        'responsable.area',
+        'qr',
+        'historiales',
+        'historiales.usuario',
         'mantenimientos',
         'mantenimientos.tecnico',
+        'mantenimientosProgramados',
+        'mantenimientosProgramados.tecnico',
+        'garantias',
+        'proveedores',
+        'proveedores.proveedor',
+        'depreciaciones',
       ],
     });
 
@@ -67,63 +122,82 @@ export class ActivosService {
     return activo;
   }
 
-  async update(id: number, updateActivoDto: UpdateActivoDto): Promise<Activo> {
+  async update(
+    id: number,
+    updateActivoDto: UpdateActivoDto,
+    usuarioId: number,
+  ): Promise<Activo> {
     const activo = await this.findOne(id);
+
+    // Verificar código único si se está cambiando
+    if (updateActivoDto.codigo && updateActivoDto.codigo !== activo.codigo) {
+      const existingActivo = await this.activoRepository.findOne({
+        where: { codigo: updateActivoDto.codigo },
+      });
+      if (existingActivo) {
+        throw new BadRequestException(
+          `El código ${updateActivoDto.codigo} ya está en uso`,
+        );
+      }
+    }
+
+    // Guardar valores anteriores para historial
+    const estadoAnterior = activo.estado;
+    const responsableAnteriorId = activo.responsableId;
+    const areaAnteriorId = activo.areaId;
+
+    // Actualizar campos
+    if (updateActivoDto.fechaCompra) {
+      updateActivoDto.fechaCompra = new Date(
+        updateActivoDto.fechaCompra,
+      ) as any;
+    }
+
     Object.assign(activo, updateActivoDto);
-    return this.activoRepository.save(activo);
+
+    const updatedActivo = await this.activoRepository.save(activo);
+
+    // Registrar cambios en historial
+    const cambios: string[] = [];
+    if (estadoAnterior !== updatedActivo.estado) {
+      cambios.push(`Estado: ${estadoAnterior} → ${updatedActivo.estado}`);
+    }
+    if (responsableAnteriorId !== updatedActivo.responsableId) {
+      cambios.push('Cambio de responsable');
+    }
+    if (areaAnteriorId !== updatedActivo.areaId) {
+      cambios.push('Cambio de área');
+    }
+
+    if (cambios.length > 0) {
+      try {
+        await this.historialActivosService.create({
+          activoId: updatedActivo.id,
+          usuarioId,
+          accion: 'Actualización de activo',
+          descripcion: cambios.join(', '),
+          responsableAnteriorId,
+          responsableNuevoId: updatedActivo.responsableId,
+          areaAnteriorId,
+          areaNuevaId: updatedActivo.areaId,
+          estadoAnterior,
+          estadoNuevo: updatedActivo.estado,
+        });
+      } catch (error) {
+        console.error('Error al registrar historial:', error);
+      }
+    }
+
+    return this.findOne(updatedActivo.id);
   }
 
   async remove(id: number): Promise<void> {
     const activo = await this.findOne(id);
-
-    // Eliminar imagen QR si existe
-    if (activo.qrImagen) {
-      const qrPath = path.join(process.cwd(), activo.qrImagen);
-      if (fs.existsSync(qrPath)) {
-        fs.unlinkSync(qrPath);
-      }
-    }
-
     await this.activoRepository.remove(activo);
   }
 
-  async generateQR(activoId: number): Promise<void> {
-    const activo = await this.findOne(activoId);
-    const baseUrl = this.configService.get<string>('qr.baseUrl');
-    const qrUrl = `${baseUrl}/${activoId}`;
-
-    // Generar código QR
-    const qrFileName = `activo_${activoId}_${Date.now()}.png`;
-    const qrFilePath = path.join(this.qrDirectory, qrFileName);
-
-    try {
-      await QRCode.toFile(qrFilePath, qrUrl, {
-        errorCorrectionLevel: 'H',
-        type: 'png',
-        width: 300,
-        margin: 1,
-      });
-
-      // Eliminar QR anterior si existe
-      if (activo.qrImagen) {
-        const oldQrPath = path.join(process.cwd(), activo.qrImagen);
-        if (fs.existsSync(oldQrPath)) {
-          fs.unlinkSync(oldQrPath);
-        }
-      }
-
-      // Actualizar activo con nueva URL e imagen
-      activo.qrUrl = qrUrl;
-      activo.qrImagen = `uploads/qr/${qrFileName}`;
-      await this.activoRepository.save(activo);
-    } catch (error) {
-      throw new Error(`Error al generar QR: ${error.message}`);
-    }
-  }
-
   async regenerateQR(activoId: number): Promise<Activo> {
-    await this.generateQR(activoId);
+    await this.activosQrService.regenerateQR(activoId);
     return this.findOne(activoId);
   }
 }
-
