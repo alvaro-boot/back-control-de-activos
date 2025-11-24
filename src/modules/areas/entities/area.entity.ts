@@ -11,6 +11,7 @@ import { Sede } from '../../sedes/entities/sede.entity';
 import { Usuario } from '../../usuarios/entities/usuario.entity';
 import { Activo } from '../../activos/entities/activo.entity';
 import { HistorialActivo } from '../../historial-activos/entities/historial-activo.entity';
+import { Empleado } from '../../empleados/entities/empleado.entity';
 
 @Entity('areas')
 export class Area {
@@ -41,4 +42,7 @@ export class Area {
 
   @OneToMany(() => HistorialActivo, (historial) => historial.areaNueva)
   historialesAreaNueva: HistorialActivo[];
+
+  @OneToMany(() => Empleado, (empleado) => empleado.area)
+  empleados: Empleado[];
 }

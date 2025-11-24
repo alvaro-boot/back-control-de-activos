@@ -35,14 +35,31 @@ export class EmpleadosService {
     const where = empresaId ? { empresaId } : {};
     return this.empleadoRepository.find({
       where,
-      relations: ['empresa', 'area', 'asignaciones'],
+      relations: [
+        'empresa',
+        'area',
+        'area.sede',
+        'area.sede.empresa',
+        'asignaciones',
+      ],
     });
   }
 
   async findOne(id: number): Promise<Empleado> {
     const empleado = await this.empleadoRepository.findOne({
       where: { id },
-      relations: ['empresa', 'area', 'asignaciones', 'asignaciones.activo'],
+      relations: [
+        'empresa',
+        'area',
+        'area.sede',
+        'area.sede.empresa',
+        'asignaciones',
+        'asignaciones.activo',
+        'asignaciones.activo.categoria',
+        'asignaciones.activo.sede',
+        'asignaciones.entregadoPor',
+        'asignaciones.recibidoPor',
+      ],
     });
 
     if (!empleado) {

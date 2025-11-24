@@ -23,6 +23,20 @@ export interface Config {
   qr: {
     baseUrl: string;
   };
+  frontend?: {
+    url: string;
+  };
+  email?: {
+    provider?: string;
+    from?: string;
+    fromName?: string;
+    host?: string;
+    port?: number;
+    secure?: boolean;
+    user?: string;
+    password?: string;
+    apiKey?: string;
+  };
 }
 
 let configCache: Config | null = null;

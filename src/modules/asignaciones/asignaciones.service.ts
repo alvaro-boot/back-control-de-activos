@@ -46,41 +46,76 @@ export class AsignacionesService {
     return this.asignacionRepository.save(asignacion);
   }
 
-  async findAll(activoId?: number, empleadoId?: number): Promise<Asignacion[]> {
-    const where: any = {};
-    if (activoId) where.activoId = activoId;
-    if (empleadoId) where.empleadoId = empleadoId;
+  async findAll(
+    activoId?: number,
+    empleadoId?: number,
+    empresaId?: number,
+  ): Promise<Asignacion[]> {
+    const queryBuilder = this.asignacionRepository
+      .createQueryBuilder('asignacion')
+      .leftJoinAndSelect('asignacion.activo', 'activo')
+      .leftJoinAndSelect('activo.categoria', 'categoria')
+      .leftJoinAndSelect('activo.sede', 'sede')
+      .leftJoinAndSelect('activo.area', 'area')
+      .leftJoinAndSelect('asignacion.empleado', 'empleado')
+      .leftJoinAndSelect('empleado.area', 'empleadoArea')
+      .leftJoinAndSelect('empleadoArea.sede', 'empleadoSede')
+      .leftJoinAndSelect('empleado.empresa', 'empleadoEmpresa')
+      .leftJoinAndSelect('asignacion.entregadoPor', 'entregadoPor')
+      .leftJoinAndSelect('entregadoPor.rol', 'entregadoPorRol')
+      .leftJoinAndSelect('asignacion.recibidoPor', 'recibidoPor')
+      .leftJoinAndSelect('recibidoPor.rol', 'recibidoPorRol');
 
-    return this.asignacionRepository.find({
-      where,
-      relations: [
-        'activo',
-        'empleado',
-        'empleado.area',
-        'entregadoPor',
-        'recibidoPor',
-      ],
-      order: { fechaAsignacion: 'DESC' },
-    });
+    if (activoId) {
+      queryBuilder.andWhere('asignacion.activoId = :activoId', { activoId });
+    }
+
+    if (empleadoId) {
+      queryBuilder.andWhere('asignacion.empleadoId = :empleadoId', { empleadoId });
+    }
+
+    if (empresaId) {
+      queryBuilder.andWhere('activo.empresaId = :empresaId', { empresaId });
+    }
+
+    queryBuilder.orderBy('asignacion.fechaAsignacion', 'DESC');
+
+    return queryBuilder.getMany();
   }
 
   async findOne(id: number): Promise<Asignacion> {
-    const asignacion = await this.asignacionRepository.findOne({
-      where: { id },
-      relations: [
-        'activo',
-        'empleado',
-        'empleado.area',
-        'entregadoPor',
-        'recibidoPor',
-      ],
-    });
+    try {
+      const asignacion = await this.asignacionRepository.findOne({
+        where: { id },
+        relations: [
+          'activo',
+          'activo.categoria',
+          'activo.sede',
+          'activo.area',
+          'activo.responsable',
+          'activo.responsable.empresa',
+          'activo.responsable.area',
+          'empleado',
+          'empleado.area',
+          'empleado.empresa',
+          'entregadoPor',
+          'entregadoPor.rol',
+          'entregadoPor.empresa',
+          'recibidoPor',
+          'recibidoPor.rol',
+          'recibidoPor.empresa',
+        ],
+      });
 
-    if (!asignacion) {
-      throw new NotFoundException(`Asignación con ID ${id} no encontrada`);
+      if (!asignacion) {
+        throw new NotFoundException(`Asignación con ID ${id} no encontrada`);
+      }
+
+      return asignacion;
+    } catch (error) {
+      console.error('Error en findOne asignacion:', error);
+      throw error;
     }
-
-    return asignacion;
   }
 
   async devolver(
@@ -103,24 +138,50 @@ export class AsignacionesService {
   }
 
   async getHistorialActivo(activoId: number): Promise<Asignacion[]> {
-    return this.asignacionRepository.find({
-      where: { activoId },
-      relations: [
-        'empleado',
-        'empleado.area',
-        'entregadoPor',
-        'recibidoPor',
-      ],
-      order: { fechaAsignacion: 'DESC' },
-    });
+    try {
+      return await this.asignacionRepository.find({
+        where: { activoId },
+        relations: [
+          'activo',
+          'empleado',
+          'empleado.area',
+          'empleado.empresa',
+          'entregadoPor',
+          'entregadoPor.rol',
+          'recibidoPor',
+          'recibidoPor.rol',
+        ],
+        order: { fechaAsignacion: 'DESC' },
+      });
+    } catch (error) {
+      console.error('Error en getHistorialActivo:', error);
+      throw error;
+    }
   }
 
   async getHistorialEmpleado(empleadoId: number): Promise<Asignacion[]> {
-    return this.asignacionRepository.find({
-      where: { empleadoId },
-      relations: ['activo', 'entregadoPor', 'recibidoPor'],
-      order: { fechaAsignacion: 'DESC' },
-    });
+    try {
+      return await this.asignacionRepository.find({
+        where: { empleadoId },
+        relations: [
+          'activo',
+          'activo.categoria',
+          'activo.sede',
+          'activo.area',
+          'empleado',
+          'empleado.area',
+          'empleado.empresa',
+          'entregadoPor',
+          'entregadoPor.rol',
+          'recibidoPor',
+          'recibidoPor.rol',
+        ],
+        order: { fechaAsignacion: 'DESC' },
+      });
+    } catch (error) {
+      console.error('Error en getHistorialEmpleado:', error);
+      throw error;
+    }
   }
 
   async remove(id: number): Promise<void> {

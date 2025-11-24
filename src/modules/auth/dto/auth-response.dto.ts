@@ -10,10 +10,19 @@ export class AuthResponseDto {
   @ApiProperty()
   user: {
     id: number;
-    nombre: string;
+    nombreCompleto: string;
     correo: string;
-    role: string;
+    telefono?: string;
+    activo: number;
     empresaId: number;
+    rolId: number;
+    areaId?: number;
+    role?: {
+      id: number;
+      nombre: string;
+    };
+    empresa?: any;
+    area?: any;
   };
 }
 

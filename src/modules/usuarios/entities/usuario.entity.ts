@@ -10,10 +10,10 @@ import {
 import { Empresa } from '../../empresas/entities/empresa.entity';
 import { Role } from '../../roles/entities/role.entity';
 import { Area } from '../../areas/entities/area.entity';
-import { Activo } from '../../activos/entities/activo.entity';
 import { Mantenimiento } from '../../mantenimientos/entities/mantenimiento.entity';
 import { MantenimientoProgramado } from '../../mantenimientos-programados/entities/mantenimiento-programado.entity';
 import { HistorialActivo } from '../../historial-activos/entities/historial-activo.entity';
+import { Asignacion } from '../../asignaciones/entities/asignacion.entity';
 
 @Entity('usuarios')
 export class Usuario {
@@ -59,8 +59,7 @@ export class Usuario {
   @JoinColumn({ name: 'area_id' })
   area: Area;
 
-  @OneToMany(() => Activo, (activo) => activo.responsable)
-  activosResponsable: Activo[];
+  // Responsable de activos ahora es un empleado, no un usuario
 
   @OneToMany(() => Mantenimiento, (mantenimiento) => mantenimiento.tecnico)
   mantenimientos: Mantenimiento[];
@@ -76,4 +75,10 @@ export class Usuario {
 
   @OneToMany(() => HistorialActivo, (historial) => historial.responsableNuevo)
   historialesResponsableNuevo: HistorialActivo[];
+
+  @OneToMany(() => Asignacion, (asignacion) => asignacion.entregadoPor)
+  asignacionesEntregadas: Asignacion[];
+
+  @OneToMany(() => Asignacion, (asignacion) => asignacion.recibidoPor)
+  asignacionesRecibidas: Asignacion[];
 }

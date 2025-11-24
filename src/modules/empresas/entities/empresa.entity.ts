@@ -10,6 +10,7 @@ import { Sede } from '../../sedes/entities/sede.entity';
 import { Categoria } from '../../categorias/entities/categoria.entity';
 import { Activo } from '../../activos/entities/activo.entity';
 import { Proveedor } from '../../proveedores/entities/proveedor.entity';
+import { Empleado } from '../../empleados/entities/empleado.entity';
 
 @Entity('empresas')
 export class Empresa {
@@ -48,4 +49,7 @@ export class Empresa {
 
   @OneToMany(() => Proveedor, (proveedor) => proveedor.empresa)
   proveedores: Proveedor[];
+
+  @OneToMany(() => Empleado, (empleado) => empleado.empresa)
+  empleados: Empleado[];
 }

@@ -17,12 +17,23 @@ export class AreasService {
     return this.areaRepository.save(area);
   }
 
-  async findAll(sedeId?: number): Promise<Area[]> {
-    const where = sedeId ? { sedeId } : {};
-    return this.areaRepository.find({
-      where,
-      relations: ['sede', 'sede.empresa', 'usuarios', 'activos'],
-    });
+  async findAll(sedeId?: number, empresaId?: number): Promise<Area[]> {
+    const queryBuilder = this.areaRepository
+      .createQueryBuilder('area')
+      .leftJoinAndSelect('area.sede', 'sede')
+      .leftJoinAndSelect('sede.empresa', 'empresa')
+      .leftJoinAndSelect('area.usuarios', 'usuarios')
+      .leftJoinAndSelect('area.activos', 'activos');
+
+    if (sedeId) {
+      queryBuilder.andWhere('area.sedeId = :sedeId', { sedeId });
+    }
+
+    if (empresaId) {
+      queryBuilder.andWhere('sede.empresaId = :empresaId', { empresaId });
+    }
+
+    return queryBuilder.getMany();
   }
 
   async findOne(id: number): Promise<Area> {

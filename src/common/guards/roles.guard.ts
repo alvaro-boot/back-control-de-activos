@@ -17,7 +17,20 @@ export class RolesGuard implements CanActivate {
     }
 
     const { user } = context.switchToHttp().getRequest();
-    return requiredRoles.some((role) => user?.role?.nombre === role);
+    
+    if (!user) {
+      return false;
+    }
+
+    // Obtener el rol del usuario (puede venir de diferentes formas)
+    const userRole = user.rol?.nombre || user.role?.nombre || user.role;
+    
+    // El administrador del sistema tiene acceso a todo
+    if (userRole === 'administrador_sistema') {
+      return true;
+    }
+    
+    return requiredRoles.some((role) => userRole === role);
   }
 }
 

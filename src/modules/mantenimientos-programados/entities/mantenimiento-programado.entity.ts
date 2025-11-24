@@ -36,6 +36,12 @@ export class MantenimientoProgramado {
   })
   estado: EstadoMantenimientoProgramado;
 
+  @Column({ type: 'text', nullable: true })
+  descripcion?: string;
+
+  @Column({ type: 'json', nullable: true })
+  tareas?: string[];
+
   @CreateDateColumn({ name: 'creado_en' })
   creadoEn: Date;
 

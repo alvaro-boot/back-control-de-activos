@@ -9,6 +9,7 @@ import {
   UseGuards,
   ParseIntPipe,
   Query,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AreasService } from './areas.service';
@@ -18,28 +19,49 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { AdminSistemaUtil } from '../../common/utils/admin-sistema.util';
+import { SedesService } from '../sedes/sedes.service';
 
 @ApiTags('Áreas')
 @ApiBearerAuth()
 @Controller('areas')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AreasController {
-  constructor(private readonly areasService: AreasService) {}
+  constructor(
+    private readonly areasService: AreasService,
+    private readonly sedesService: SedesService,
+  ) {}
 
   @Post()
-  @Roles('administrador')
+  @Roles('administrador', 'administrador_sistema')
   @ApiOperation({ summary: 'Crear nueva área' })
   @ApiResponse({ status: 201, description: 'Área creada' })
-  create(@Body() createAreaDto: CreateAreaDto) {
+  async create(
+    @Body() createAreaDto: CreateAreaDto,
+    @CurrentUser() user: any,
+  ) {
+    // Verificar que la sede pertenece a la empresa del usuario
+    if (!AdminSistemaUtil.isAdminSistema(user) && createAreaDto.sedeId) {
+      const sede = await this.sedesService.findOne(createAreaDto.sedeId);
+      if (sede.empresaId !== user?.empresaId) {
+        throw new ForbiddenException('La sede debe pertenecer a tu empresa');
+      }
+    }
     return this.areasService.create(createAreaDto);
   }
 
   @Get()
   @ApiOperation({ summary: 'Obtener todas las áreas' })
   @ApiResponse({ status: 200, description: 'Lista de áreas' })
-  findAll(@Query('sedeId') sedeId?: string) {
+  findAll(
+    @Query('sedeId') sedeId?: string,
+    @Query('empresaId') empresaId?: string,
+    @CurrentUser() user?: any,
+  ) {
+    const empresaIdFilter = AdminSistemaUtil.getEmpresaIdFilter(user, empresaId);
     return this.areasService.findAll(
       sedeId ? parseInt(sedeId, 10) : undefined,
+      empresaIdFilter,
     );
   }
 
@@ -52,21 +74,35 @@ export class AreasController {
   }
 
   @Patch(':id')
-  @Roles('administrador')
+  @Roles('administrador', 'administrador_sistema')
   @ApiOperation({ summary: 'Actualizar área' })
   @ApiResponse({ status: 200, description: 'Área actualizada' })
-  update(
+  async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateAreaDto: UpdateAreaDto,
+    @CurrentUser() user: any,
   ) {
+    // Verificar que el área pertenece a la empresa del usuario
+    const area = await this.areasService.findOne(id);
+    if (!AdminSistemaUtil.isAdminSistema(user) && area.sede?.empresaId !== user?.empresaId) {
+      throw new ForbiddenException('Solo puedes editar áreas de tu empresa');
+    }
     return this.areasService.update(id, updateAreaDto);
   }
 
   @Delete(':id')
-  @Roles('administrador')
+  @Roles('administrador', 'administrador_sistema')
   @ApiOperation({ summary: 'Eliminar área' })
   @ApiResponse({ status: 200, description: 'Área eliminada' })
-  remove(@Param('id', ParseIntPipe) id: number) {
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: any,
+  ) {
+    // Verificar que el área pertenece a la empresa del usuario
+    const area = await this.areasService.findOne(id);
+    if (!AdminSistemaUtil.isAdminSistema(user) && area.sede?.empresaId !== user?.empresaId) {
+      throw new ForbiddenException('Solo puedes eliminar áreas de tu empresa');
+    }
     return this.areasService.remove(id);
   }
 }

@@ -9,6 +9,7 @@ import {
   UseGuards,
   ParseIntPipe,
   Query,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { CategoriasService } from './categorias.service';
@@ -18,6 +19,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { AdminSistemaUtil } from '../../common/utils/admin-sistema.util';
 
 @ApiTags('Categorías')
 @ApiBearerAuth()
@@ -27,10 +29,17 @@ export class CategoriasController {
   constructor(private readonly categoriasService: CategoriasService) {}
 
   @Post()
-  @Roles('administrador')
+  @Roles('administrador', 'administrador_sistema')
   @ApiOperation({ summary: 'Crear nueva categoría' })
   @ApiResponse({ status: 201, description: 'Categoría creada' })
-  create(@Body() createCategoriaDto: CreateCategoriaDto) {
+  create(
+    @Body() createCategoriaDto: CreateCategoriaDto,
+    @CurrentUser() user: any,
+  ) {
+    // Si no es admin del sistema, asignar automáticamente la empresa del usuario
+    if (!AdminSistemaUtil.isAdminSistema(user) && user?.empresaId) {
+      createCategoriaDto.empresaId = user.empresaId;
+    }
     return this.categoriasService.create(createCategoriaDto);
   }
 
@@ -41,9 +50,7 @@ export class CategoriasController {
     @Query('empresaId') empresaId?: string,
     @CurrentUser() user?: any,
   ) {
-    const empresaIdFilter = empresaId
-      ? parseInt(empresaId, 10)
-      : user?.empresaId;
+    const empresaIdFilter = AdminSistemaUtil.getEmpresaIdFilter(user, empresaId);
     return this.categoriasService.findAll(empresaIdFilter);
   }
 
@@ -56,21 +63,35 @@ export class CategoriasController {
   }
 
   @Patch(':id')
-  @Roles('administrador')
+  @Roles('administrador', 'administrador_sistema')
   @ApiOperation({ summary: 'Actualizar categoría' })
   @ApiResponse({ status: 200, description: 'Categoría actualizada' })
-  update(
+  async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCategoriaDto: UpdateCategoriaDto,
+    @CurrentUser() user: any,
   ) {
+    // Verificar que la categoría pertenece a la empresa del usuario
+    const categoria = await this.categoriasService.findOne(id);
+    if (!AdminSistemaUtil.isAdminSistema(user) && categoria.empresaId !== user?.empresaId) {
+      throw new ForbiddenException('Solo puedes editar categorías de tu empresa');
+    }
     return this.categoriasService.update(id, updateCategoriaDto);
   }
 
   @Delete(':id')
-  @Roles('administrador')
+  @Roles('administrador', 'administrador_sistema')
   @ApiOperation({ summary: 'Eliminar categoría' })
   @ApiResponse({ status: 200, description: 'Categoría eliminada' })
-  remove(@Param('id', ParseIntPipe) id: number) {
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: any,
+  ) {
+    // Verificar que la categoría pertenece a la empresa del usuario
+    const categoria = await this.categoriasService.findOne(id);
+    if (!AdminSistemaUtil.isAdminSistema(user) && categoria.empresaId !== user?.empresaId) {
+      throw new ForbiddenException('Solo puedes eliminar categorías de tu empresa');
+    }
     return this.categoriasService.remove(id);
   }
 }

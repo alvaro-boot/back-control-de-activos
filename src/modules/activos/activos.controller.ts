@@ -17,19 +17,23 @@ import { CreateActivoDto } from './dto/create-activo.dto';
 import { UpdateActivoDto } from './dto/update-activo.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { Permissions, Permission } from '../../common/decorators/permissions.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import { AdminSistemaUtil } from '../../common/utils/admin-sistema.util';
 
 @ApiTags('Activos')
 @ApiBearerAuth()
 @Controller('activos')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 export class ActivosController {
   constructor(private readonly activosService: ActivosService) {}
 
   @Post()
-  @Roles('administrador', 'tecnico')
+  @Roles('administrador', 'administrador_sistema')
+  @Permissions(Permission.ACTIVOS_CREATE)
   @ApiOperation({ summary: 'Crear nuevo activo' })
   @ApiResponse({ status: 201, description: 'Activo creado' })
   create(
@@ -40,28 +44,34 @@ export class ActivosController {
   }
 
   @Get()
+  @Permissions(Permission.ACTIVOS_VIEW)
   @ApiOperation({ summary: 'Obtener todos los activos' })
   @ApiResponse({ status: 200, description: 'Lista de activos' })
   findAll(
     @Query('empresaId') empresaId?: string,
     @CurrentUser() user?: any,
   ) {
-    const empresaIdFilter = empresaId
-      ? parseInt(empresaId, 10)
-      : user?.empresaId;
+    const empresaIdFilter = AdminSistemaUtil.getEmpresaIdFilter(user, empresaId);
     return this.activosService.findAll(empresaIdFilter);
   }
 
   @Get(':id')
+  @Permissions(Permission.ACTIVOS_VIEW)
   @ApiOperation({ summary: 'Obtener activo por ID' })
   @ApiResponse({ status: 200, description: 'Activo encontrado' })
   @ApiResponse({ status: 404, description: 'Activo no encontrado' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user?: any) {
+    // Los empleados solo pueden ver activos asignados a ellos
+    const userRole = user?.rol?.nombre || user?.rol;
+    if (userRole === 'empleado') {
+      return this.activosService.findOneForEmpleado(id, user.id);
+    }
     return this.activosService.findOne(id);
   }
 
   @Patch(':id')
-  @Roles('administrador', 'tecnico')
+  @Roles('administrador', 'tecnico', 'administrador_sistema')
+  @Permissions(Permission.ACTIVOS_EDIT)
   @ApiOperation({ summary: 'Actualizar activo' })
   @ApiResponse({ status: 200, description: 'Activo actualizado' })
   update(
@@ -69,11 +79,17 @@ export class ActivosController {
     @Body() updateActivoDto: UpdateActivoDto,
     @CurrentUser() user: any,
   ) {
+    // Los técnicos solo pueden cambiar el estado operativo
+    const userRole = user?.rol?.nombre || user?.rol;
+    if (userRole === 'tecnico') {
+      return this.activosService.updateEstadoTecnico(id, updateActivoDto, user.id);
+    }
     return this.activosService.update(id, updateActivoDto, user.id);
   }
 
   @Delete(':id')
-  @Roles('administrador')
+  @Roles('administrador', 'administrador_sistema')
+  @Permissions(Permission.ACTIVOS_DELETE)
   @ApiOperation({ summary: 'Eliminar activo' })
   @ApiResponse({ status: 200, description: 'Activo eliminado' })
   remove(@Param('id', ParseIntPipe) id: number) {
@@ -81,7 +97,8 @@ export class ActivosController {
   }
 
   @PostMethod(':id/regenerar-qr')
-  @Roles('administrador', 'tecnico')
+  @Roles('administrador', 'administrador_sistema')
+  @Permissions(Permission.ACTIVOS_QR_GENERATE)
   @ApiOperation({ summary: 'Regenerar código QR del activo' })
   @ApiResponse({ status: 200, description: 'QR regenerado' })
   regenerateQR(@Param('id', ParseIntPipe) id: number) {

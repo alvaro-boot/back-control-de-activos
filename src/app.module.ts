@@ -25,6 +25,14 @@ import { GarantiasModule } from './modules/garantias/garantias.module';
 import { ProveedoresModule } from './modules/proveedores/proveedores.module';
 import { ActivosProveedoresModule } from './modules/activos-proveedores/activos-proveedores.module';
 import { DepreciacionActivosModule } from './modules/depreciacion-activos/depreciacion-activos.module';
+import { AsignacionesModule } from './modules/asignaciones/asignaciones.module';
+import { EmpleadosModule } from './modules/empleados/empleados.module';
+import { AdminSistemaModule } from './modules/admin-sistema/admin-sistema.module';
+import { SolicitudesModule } from './modules/solicitudes/solicitudes.module';
+import { NotificacionesModule } from './modules/notificaciones/notificaciones.module';
+import { InventarioFisicoModule } from './modules/inventario-fisico/inventario-fisico.module';
+import { ReportesModule } from './modules/reportes/reportes.module';
+import { EmailModule } from './common/services/email.module';
 
 @Module({
   imports: [
@@ -50,6 +58,9 @@ import { DepreciacionActivosModule } from './modules/depreciacion-activos/deprec
       serveRoot: '/uploads',
     }),
 
+    // Módulos globales
+    EmailModule,
+
     // Módulos de la aplicación
     AuthModule,
     UsuariosModule,
@@ -67,6 +78,13 @@ import { DepreciacionActivosModule } from './modules/depreciacion-activos/deprec
     ProveedoresModule,
     ActivosProveedoresModule,
     DepreciacionActivosModule,
+    AsignacionesModule,
+    EmpleadosModule,
+    AdminSistemaModule,
+    SolicitudesModule,
+    NotificacionesModule,
+    InventarioFisicoModule,
+    ReportesModule,
   ],
 })
 export class AppModule {}

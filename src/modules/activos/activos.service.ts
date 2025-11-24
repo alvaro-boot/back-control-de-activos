@@ -69,57 +69,58 @@ export class ActivosService {
   }
 
   async findAll(empresaId?: number): Promise<Activo[]> {
-    const where = empresaId ? { empresaId } : {};
-    return this.activoRepository.find({
-      where,
-      relations: [
-        'empresa',
-        'categoria',
-        'sede',
-        'area',
-        'responsable',
-        'responsable.rol',
-        'qr',
-        'mantenimientos',
-        'mantenimientosProgramados',
-        'garantias',
-      ],
-      order: { creadoEn: 'DESC' },
-    });
+    try {
+      const where = empresaId ? { empresaId } : {};
+      return await this.activoRepository.find({
+        where,
+        relations: [
+          'empresa',
+          'categoria',
+          'sede',
+          'area',
+          'responsable',
+          'qr',
+        ],
+        order: { creadoEn: 'DESC' },
+      });
+    } catch (error) {
+      console.error('Error en findAll activos:', error);
+      throw error;
+    }
   }
 
   async findOne(id: number): Promise<Activo> {
-    const activo = await this.activoRepository.findOne({
-      where: { id },
-      relations: [
-        'empresa',
-        'categoria',
-        'sede',
-        'sede.empresa',
-        'area',
-        'area.sede',
-        'responsable',
-        'responsable.rol',
-        'responsable.area',
-        'qr',
-        'historiales',
-        'historiales.usuario',
-        'mantenimientos',
-        'mantenimientos.tecnico',
-        'mantenimientosProgramados',
-        'mantenimientosProgramados.tecnico',
-        'garantias',
-        'proveedores',
-        'proveedores.proveedor',
-        'depreciaciones',
-      ],
-    });
+    try {
+      const activo = await this.activoRepository.findOne({
+        where: { id },
+        relations: [
+          'empresa',
+          'categoria',
+          'sede',
+          'area',
+          'responsable',
+          'responsable.empresa',
+          'responsable.area',
+          'qr',
+          'historiales',
+          'historiales.usuario',
+          'mantenimientos',
+          'mantenimientos.tecnico',
+          'mantenimientosProgramados',
+          'mantenimientosProgramados.tecnico',
+          'garantias',
+        ],
+      });
 
-    if (!activo) {
-      throw new NotFoundException(`Activo con ID ${id} no encontrado`);
+      if (!activo) {
+        throw new NotFoundException(`Activo con ID ${id} no encontrado`);
+      }
+
+      return activo;
+    } catch (error) {
+      console.error('Error en findOne activo:', error);
+      throw error;
     }
-
-    return activo;
   }
 
   async update(
@@ -199,5 +200,113 @@ export class ActivosService {
   async regenerateQR(activoId: number): Promise<Activo> {
     await this.activosQrService.regenerateQR(activoId);
     return this.findOne(activoId);
+  }
+
+  // Método para empleados: solo pueden ver activos asignados a ellos
+  async findOneForEmpleado(id: number, usuarioId: number): Promise<Activo> {
+    const activo = await this.activoRepository.findOne({
+      where: { id },
+      relations: [
+        'empresa',
+        'categoria',
+        'sede',
+        'area',
+        'responsable',
+        'qr',
+        'mantenimientosProgramados',
+        'garantias',
+        'asignaciones',
+        'asignaciones.empleado',
+      ],
+    });
+
+    if (!activo) {
+      throw new NotFoundException(`Activo con ID ${id} no encontrado`);
+    }
+
+    // Buscar empleado por correo del usuario (asumiendo que el correo coincide)
+    const usuario = await this.activoRepository.manager
+      .getRepository('usuarios')
+      .findOne({
+        where: { id: usuarioId },
+        select: ['id', 'correo', 'areaId'],
+      });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    // Buscar empleado con el mismo correo
+    const empleado = await this.activoRepository.manager
+      .getRepository('empleados')
+      .findOne({
+        where: { correo: (usuario as any).correo },
+        select: ['id', 'correo'],
+      });
+
+    // Verificar que el activo esté asignado al empleado o sea responsable
+    if (empleado) {
+      const asignacionActiva = activo.asignaciones?.find(
+        (a) => a.empleadoId === (empleado as any).id && !a.fechaDevolucion,
+      );
+
+      if (!asignacionActiva && activo.responsableId !== (empleado as any).id) {
+        throw new NotFoundException('No tienes acceso a este activo');
+      }
+    } else {
+      // Si no hay empleado asociado, verificar por área del usuario
+      if ((usuario as any).areaId && activo.areaId !== (usuario as any).areaId) {
+        throw new NotFoundException('No tienes acceso a este activo');
+      }
+    }
+
+    // Ocultar datos financieros para empleados
+    const activoSinFinanciero = { ...activo };
+    delete (activoSinFinanciero as any).valorCompra;
+    delete (activoSinFinanciero as any).valorActual;
+    delete (activoSinFinanciero as any).depreciaciones;
+
+    return activoSinFinanciero as Activo;
+  }
+
+  // Método para técnicos: solo pueden cambiar el estado operativo
+  async updateEstadoTecnico(
+    id: number,
+    updateActivoDto: UpdateActivoDto,
+    usuarioId: number,
+  ): Promise<Activo> {
+    const activo = await this.findOne(id);
+
+    // Solo permitir cambios de estado operativo
+    const estadosPermitidos = ['activo', 'mantenimiento', 'retirado'];
+    if (updateActivoDto.estado && !estadosPermitidos.includes(updateActivoDto.estado)) {
+      throw new BadRequestException('Estado no permitido para técnicos');
+    }
+
+    // Solo actualizar el estado, ignorar otros campos
+    const estadoAnterior = activo.estado;
+    if (updateActivoDto.estado) {
+      activo.estado = updateActivoDto.estado as EstadoActivo;
+    }
+
+    const updatedActivo = await this.activoRepository.save(activo);
+
+    // Registrar en historial
+    if (estadoAnterior !== updatedActivo.estado) {
+      try {
+        await this.historialActivosService.create({
+          activoId: updatedActivo.id,
+          usuarioId,
+          accion: 'Cambio de estado técnico',
+          descripcion: `Estado cambiado por técnico: ${estadoAnterior} → ${updatedActivo.estado}`,
+          estadoAnterior,
+          estadoNuevo: updatedActivo.estado,
+        });
+      } catch (error) {
+        console.error('Error al registrar historial:', error);
+      }
+    }
+
+    return this.findOne(updatedActivo.id);
   }
 }

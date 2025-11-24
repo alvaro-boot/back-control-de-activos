@@ -5,11 +5,13 @@ import { MantenimientosController } from './mantenimientos.controller';
 import { Mantenimiento } from './entities/mantenimiento.entity';
 import { MantenimientosTask } from './tasks/mantenimientos.task';
 import { MantenimientosProgramadosModule } from '../mantenimientos-programados/mantenimientos-programados.module';
+import { NotificacionesModule } from '../notificaciones/notificaciones.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Mantenimiento]),
     MantenimientosProgramadosModule,
+    NotificacionesModule,
   ],
   controllers: [MantenimientosController],
   providers: [MantenimientosService, MantenimientosTask],

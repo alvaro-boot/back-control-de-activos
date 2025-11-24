@@ -21,6 +21,8 @@ export default () => {
     qr: {
       baseUrl: config.qr.baseUrl,
     },
+    frontend: config.frontend || { url: 'http://localhost:3001' },
+    email: config.email || {},
     nodeEnv: config.server.nodeEnv,
   };
 };

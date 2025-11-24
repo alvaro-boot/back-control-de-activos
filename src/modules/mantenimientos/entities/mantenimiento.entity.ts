@@ -14,6 +14,13 @@ export enum TipoMantenimiento {
   CORRECTIVO = 'correctivo',
 }
 
+export enum EstadoMantenimiento {
+  PENDIENTE = 'pendiente',
+  INICIADO = 'iniciado',
+  PAUSADO = 'pausado',
+  FINALIZADO = 'finalizado',
+}
+
 @Entity('mantenimientos')
 export class Mantenimiento {
   @PrimaryGeneratedColumn()
@@ -31,11 +38,33 @@ export class Mantenimiento {
   })
   tipo: TipoMantenimiento;
 
+  @Column({
+    type: 'enum',
+    enum: EstadoMantenimiento,
+    default: EstadoMantenimiento.PENDIENTE,
+  })
+  estado: EstadoMantenimiento;
+
   @Column({ type: 'text', nullable: true })
   notas: string;
 
+  @Column({ type: 'text', nullable: true })
+  informeTecnico: string;
+
   @Column({ name: 'fecha_mantenimiento', type: 'date' })
   fechaMantenimiento: Date;
+
+  @Column({ name: 'fecha_inicio', type: 'datetime', nullable: true })
+  fechaInicio: Date;
+
+  @Column({ name: 'fecha_finalizacion', type: 'datetime', nullable: true })
+  fechaFinalizacion: Date;
+
+  @Column({ name: 'tiempo_intervencion', type: 'int', nullable: true })
+  tiempoIntervencion: number; // en minutos
+
+  @Column({ type: 'text', nullable: true })
+  repuestosUtilizados: string; // JSON o texto con repuestos
 
   @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
   costo: number;

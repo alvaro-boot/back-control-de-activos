@@ -23,5 +23,5 @@ jwt:
 
 # Configuración de QR
 qr:
-  baseUrl: "http://localhost:3000/qr/activo"
+  baseUrl: "http://localhost:3001/activos/qr"  # URL del frontend donde se mostrará el activo
 

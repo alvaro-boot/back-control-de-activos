@@ -16,10 +16,10 @@ export class CreateMantenimientoDto {
   @IsNotEmpty()
   activoId: number;
 
-  @ApiProperty({ example: 1 })
+  @ApiProperty({ example: 1, required: false })
   @IsInt()
-  @IsNotEmpty()
-  tecnicoId: number;
+  @IsOptional()
+  tecnicoId?: number;
 
   @ApiProperty({ example: 'preventivo', enum: TipoMantenimiento })
   @IsEnum(TipoMantenimiento)
@@ -40,4 +40,14 @@ export class CreateMantenimientoDto {
   @IsNumber()
   @IsOptional()
   costo?: number;
+
+  @ApiProperty({ example: 'Disco duro 500GB, Memoria RAM 8GB', required: false })
+  @IsString()
+  @IsOptional()
+  repuestosUtilizados?: string;
+
+  @ApiProperty({ example: 30, required: false })
+  @IsInt()
+  @IsOptional()
+  tiempoIntervencion?: number;
 }

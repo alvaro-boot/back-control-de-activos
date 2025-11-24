@@ -1,0 +1,3184 @@
+{
+  "info": {
+    "name": "Sistema de Control de Activos - API",
+    "description": "Colección completa de endpoints para el Sistema de Control de Activos con QR Dinámico",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "empresaId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "activoId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "empleadoId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "usuarioId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Autenticación",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": {
+              "content": "Inicia sesión y obtiene tokens de acceso. Retorna accessToken y refreshToken que deben usarse en las siguientes peticiones.\n\n**Campos requeridos:**\n- `correo`: Email del usuario\n- `password`: Contraseña (mínimo 6 caracteres)\n\n**Nota:** El token se guarda automáticamente después de un login exitoso.\n\n**Ejemplo de respuesta:**\n```json\n{\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"user\": {\n    \"id\": 1,\n    \"nombreCompleto\": \"Admin\",\n    \"correo\": \"admin@empresa.com\",\n    \"role\": {\n      \"nombre\": \"administrador\"\n    },\n    \"empresaId\": 1\n  }\n}\n```",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"admin@empresa.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Verificar que la respuesta sea exitosa",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Guardar tokens automáticamente",
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.accessToken) {",
+                  "        pm.environment.set(\"token\", jsonData.accessToken);",
+                  "        console.log(\"✅ Access token guardado automáticamente\");",
+                  "    }",
+                  "    if (jsonData.refreshToken) {",
+                  "        pm.environment.set(\"refreshToken\", jsonData.refreshToken);",
+                  "        console.log(\"✅ Refresh token guardado automáticamente\");",
+                  "    }",
+                  "    if (jsonData.user) {",
+                  "        pm.environment.set(\"usuarioId\", jsonData.user.id);",
+                  "        pm.environment.set(\"empresaId\", jsonData.user.empresaId);",
+                  "    }",
+                  "}",
+                  "",
+                  "// Validar estructura de respuesta",
+                  "pm.test(\"Response has accessToken\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property(\"accessToken\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": {
+              "content": "Registra un nuevo usuario en el sistema. Requiere datos básicos del usuario y empresa.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"empresaId\": 1,\n  \"rolId\": 1,\n  \"nombreCompleto\": \"Juan Pérez\",\n  \"correo\": \"juan@empresa.com\",\n  \"contrasena\": \"password123\",\n  \"telefono\": \"3001234567\",\n  \"areaId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Refrescar Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/refresh",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": {
+              "content": "Obtiene un nuevo accessToken usando el refreshToken. Útil cuando el token expira.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Usuarios",
+      "item": [
+        {
+          "name": "Listar Usuarios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/usuarios",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "usuarios"
+              ]
+            },
+            "description": {
+              "content": "Obtiene todos los usuarios. Los administradores ven todos, otros solo de su empresa.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Obtener Usuario",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Obtiene un usuario específico por su ID.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Crear Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/usuarios",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "usuarios"
+              ]
+            },
+            "description": {
+              "content": "Crea un nuevo usuario. Solo administradores pueden crear usuarios.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"empresaId\": 1,\n  \"rolId\": 2,\n  \"nombreCompleto\": \"Técnico\",\n  \"correo\": \"tecnico@empresa.com\",\n  \"contrasena\": \"password123\",\n  \"telefono\": \"3001234567\",\n  \"areaId\": 1,\n  \"activo\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Actualizar Usuario",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Actualiza los datos de un usuario existente.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreCompleto\": \"Juan Pérez Actualizado\",\n  \"telefono\": \"3001234568\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Eliminar Usuario",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Elimina un usuario del sistema. Solo administradores.",
+              "type": "text/markdown"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Empresas",
+      "item": [
+        {
+          "name": "Listar Empresas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/empresas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "empresas"
+              ]
+            },
+            "description": {
+              "content": "Obtiene todas las empresas. Solo administradores.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Obtener Empresa",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/empresas/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "empresas",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Obtiene una empresa específica por su ID.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Crear Empresa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/empresas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "empresas"
+              ]
+            },
+            "description": {
+              "content": "Crea una nueva empresa en el sistema.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Mi Empresa S.A.\",\n  \"nit\": \"123456789-1\",\n  \"direccion\": \"Calle 123 #45-67\",\n  \"telefono\": \"3001234567\",\n  \"correo\": \"contacto@empresa.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Actualizar Empresa",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/empresas/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "empresas",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Actualiza los datos de una empresa.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Mi Empresa S.A. Actualizada\",\n  \"telefono\": \"3001234568\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Eliminar Empresa",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/empresas/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "empresas",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Elimina una empresa del sistema.",
+              "type": "text/markdown"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Activos",
+      "item": [
+        {
+          "name": "Listar Activos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/activos?empresaId=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "activos?empresaId=1"
+              ]
+            },
+            "description": {
+              "content": "Obtiene todos los activos. Puede filtrarse por empresaId.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Obtener Activo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/activos/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "activos",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Obtiene un activo específico con toda su información, incluyendo relaciones.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Crear Activo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/activos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "activos"
+              ]
+            },
+            "description": {
+              "content": "Crea un nuevo activo. Genera automáticamente un código QR único.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"empresaId\": 1,\n  \"codigo\": \"ACT-001\",\n  \"nombre\": \"Laptop Dell Latitude 5520\",\n  \"descripcion\": \"Laptop empresarial para desarrollo\",\n  \"categoriaId\": 1,\n  \"sedeId\": 1,\n  \"areaId\": 1,\n  \"responsableId\": 1,\n  \"fechaCompra\": \"2024-01-15\",\n  \"valorCompra\": 1500000,\n  \"valorActual\": 1350000,\n  \"estado\": \"activo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Actualizar Activo",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/activos/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "activos",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Actualiza los datos de un activo existente.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Laptop Dell Actualizada\",\n  \"valorActual\": 1200000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Regenerar QR",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/activos/:id/regenerar-qr",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "activos",
+                ":id",
+                "regenerar-qr"
+              ]
+            },
+            "description": {
+              "content": "Regenera el código QR de un activo. Útil si se perdió o necesita actualizarse.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Eliminar Activo",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/activos/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "activos",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Elimina un activo del sistema. Solo administradores.",
+              "type": "text/markdown"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "QR",
+      "item": [
+        {
+          "name": "Ver Activo desde QR",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/qr/activo/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "qr",
+                "activo",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Endpoint público para ver información del activo escaneando el QR. No requiere autenticación.",
+              "type": "text/markdown"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Asignaciones",
+      "item": [
+        {
+          "name": "Listar Asignaciones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/asignaciones?activoId=1&empleadoId=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "asignaciones?activoId=1&empleadoId=1"
+              ]
+            },
+            "description": {
+              "content": "Obtiene todas las asignaciones. Puede filtrarse por activoId o empleadoId.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Obtener Asignación",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/asignaciones/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "asignaciones",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Obtiene una asignación específica por su ID.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Crear Asignación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/asignaciones",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "asignaciones"
+              ]
+            },
+            "description": {
+              "content": "Asigna un activo a un empleado. El activo debe estar disponible.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activoId\": 1,\n  \"empleadoId\": 1,\n  \"fechaAsignacion\": \"2024-01-15T10:00:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Devolver Activo",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/asignaciones/:id/devolver",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "asignaciones",
+                ":id",
+                "devolver"
+              ]
+            },
+            "description": {
+              "content": "Marca una asignación como devuelta, cerrando el ciclo de asignación.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fechaDevolucion\": \"2024-01-20T10:00:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Historial por Activo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/asignaciones/historial/activo/:activoId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "asignaciones",
+                "historial",
+                "activo",
+                ":activoId"
+              ]
+            },
+            "description": {
+              "content": "Obtiene el historial completo de asignaciones de un activo específico.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Historial por Empleado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/asignaciones/historial/empleado/:empleadoId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "asignaciones",
+                "historial",
+                "empleado",
+                ":empleadoId"
+              ]
+            },
+            "description": {
+              "content": "Obtiene el historial completo de asignaciones de un empleado específico.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Eliminar Asignación",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/asignaciones/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "asignaciones",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Elimina una asignación del sistema. Solo administradores.",
+              "type": "text/markdown"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mantenimientos",
+      "item": [
+        {
+          "name": "Listar Mantenimientos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/mantenimientos?activoId=1&tecnicoId=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "mantenimientos?activoId=1&tecnicoId=1"
+              ]
+            },
+            "description": {
+              "content": "Obtiene todos los mantenimientos. Puede filtrarse por activoId o tecnicoId.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Obtener Mantenimiento",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/mantenimientos/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "mantenimientos",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Obtiene un mantenimiento específico por su ID.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Crear Mantenimiento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/mantenimientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "mantenimientos"
+              ]
+            },
+            "description": {
+              "content": "Crea un nuevo registro de mantenimiento para un activo.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activoId\": 1,\n  \"tecnicoId\": 2,\n  \"tipo\": \"preventivo\",\n  \"notas\": \"Mantenimiento preventivo de limpieza y revisión general\",\n  \"fechaMantenimiento\": \"2024-02-15\",\n  \"costo\": 50000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Actualizar Mantenimiento",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/mantenimientos/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "mantenimientos",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Actualiza los datos de un mantenimiento existente.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notas\": \"Mantenimiento completado\",\n  \"costo\": 55000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Historial por Activo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/mantenimientos/historial/activo/:activoId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "mantenimientos",
+                "historial",
+                "activo",
+                ":activoId"
+              ]
+            },
+            "description": {
+              "content": "Obtiene el historial completo de mantenimientos de un activo específico.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Eliminar Mantenimiento",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/mantenimientos/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "mantenimientos",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Elimina un mantenimiento del sistema. Solo administradores.",
+              "type": "text/markdown"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mantenimientos Programados",
+      "item": [
+        {
+          "name": "Listar Programados",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/mantenimientos-programados?activoId=1&tecnicoId=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "mantenimientos-programados?activoId=1&tecnicoId=1"
+              ]
+            },
+            "description": {
+              "content": "Obtiene todos los mantenimientos programados. Puede filtrarse por activoId o tecnicoId.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Mantenimientos Próximos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/mantenimientos-programados/proximos?dias=7",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "mantenimientos-programados",
+                "proximos?dias=7"
+              ]
+            },
+            "description": {
+              "content": "Obtiene los mantenimientos programados para los próximos N días (por defecto 7).",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Obtener Programado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/mantenimientos-programados/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "mantenimientos-programados",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Obtiene un mantenimiento programado específico por su ID.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Crear Programado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/mantenimientos-programados",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "mantenimientos-programados"
+              ]
+            },
+            "description": {
+              "content": "Crea un nuevo mantenimiento programado para un activo.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activoId\": 1,\n  \"tecnicoId\": 2,\n  \"fechaProgramada\": \"2024-03-15\",\n  \"tipo\": \"preventivo\",\n  \"descripcion\": \"Mantenimiento preventivo mensual\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Actualizar Programado",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/mantenimientos-programados/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "mantenimientos-programados",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Actualiza un mantenimiento programado existente.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fechaProgramada\": \"2024-03-20\",\n  \"descripcion\": \"Actualizado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Eliminar Programado",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/mantenimientos-programados/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "mantenimientos-programados",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Elimina un mantenimiento programado del sistema.",
+              "type": "text/markdown"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Empleados",
+      "item": [
+        {
+          "name": "Listar Empleados",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/empleados?empresaId=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "empleados?empresaId=1"
+              ]
+            },
+            "description": {
+              "content": "Obtiene todos los empleados. Puede filtrarse por empresaId.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Obtener Empleado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/empleados/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "empleados",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Obtiene un empleado específico por su ID.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Crear Empleado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/empleados",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "empleados"
+              ]
+            },
+            "description": {
+              "content": "Crea un nuevo empleado en el sistema.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"empresaId\": 1,\n  \"areaId\": 1,\n  \"nombre\": \"Juan Pérez\",\n  \"cargo\": \"Desarrollador\",\n  \"correo\": \"juan@empresa.com\",\n  \"telefono\": \"3001234567\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Actualizar Empleado",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/empleados/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "empleados",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Actualiza los datos de un empleado existente.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Juan Pérez Actualizado\",\n  \"cargo\": \"Desarrollador Senior\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Eliminar Empleado",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/empleados/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "empleados",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Elimina un empleado del sistema. Solo administradores.",
+              "type": "text/markdown"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Áreas",
+      "item": [
+        {
+          "name": "Listar Áreas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/areas?sedeId=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "areas?sedeId=1"
+              ]
+            },
+            "description": {
+              "content": "Obtiene todas las áreas. Puede filtrarse por sedeId.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Obtener Área",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/areas/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "areas",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Obtiene un área específica por su ID.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Crear Área",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/areas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "areas"
+              ]
+            },
+            "description": {
+              "content": "Crea una nueva área en el sistema.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sedeId\": 1,\n  \"nombre\": \"Recursos Humanos\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Actualizar Área",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/areas/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "areas",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Actualiza los datos de un área existente.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Recursos Humanos Actualizado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Eliminar Área",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/areas/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "areas",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Elimina un área del sistema. Solo administradores.",
+              "type": "text/markdown"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sedes",
+      "item": [
+        {
+          "name": "Listar Sedes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/sedes?empresaId=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "sedes?empresaId=1"
+              ]
+            },
+            "description": {
+              "content": "Obtiene todas las sedes. Puede filtrarse por empresaId.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Obtener Sede",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/sedes/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "sedes",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Obtiene una sede específica por su ID.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Crear Sede",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/sedes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "sedes"
+              ]
+            },
+            "description": {
+              "content": "Crea una nueva sede en el sistema.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"empresaId\": 1,\n  \"nombre\": \"Sede Principal\",\n  \"direccion\": \"Calle 123 #45-67\",\n  \"telefono\": \"3001234567\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Actualizar Sede",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/sedes/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "sedes",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Actualiza los datos de una sede existente.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Sede Principal Actualizada\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Eliminar Sede",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/sedes/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "sedes",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Elimina una sede del sistema. Solo administradores.",
+              "type": "text/markdown"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categorías",
+      "item": [
+        {
+          "name": "Listar Categorías",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/categorias?empresaId=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "categorias?empresaId=1"
+              ]
+            },
+            "description": {
+              "content": "Obtiene todas las categorías. Puede filtrarse por empresaId.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Obtener Categoría",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/categorias/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "categorias",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Obtiene una categoría específica por su ID.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Crear Categoría",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/categorias",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "categorias"
+              ]
+            },
+            "description": {
+              "content": "Crea una nueva categoría en el sistema.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"empresaId\": 1,\n  \"nombre\": \"Computadores\",\n  \"descripcion\": \"Equipos de cómputo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Actualizar Categoría",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/categorias/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "categorias",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Actualiza los datos de una categoría existente.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Computadores Actualizado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Eliminar Categoría",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/categorias/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "categorias",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Elimina una categoría del sistema. Solo administradores.",
+              "type": "text/markdown"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Proveedores",
+      "item": [
+        {
+          "name": "Listar Proveedores",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/proveedores?empresaId=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "proveedores?empresaId=1"
+              ]
+            },
+            "description": {
+              "content": "Obtiene todos los proveedores. Puede filtrarse por empresaId.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Obtener Proveedor",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/proveedores/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "proveedores",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Obtiene un proveedor específico por su ID.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Crear Proveedor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/proveedores",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "proveedores"
+              ]
+            },
+            "description": {
+              "content": "Crea un nuevo proveedor en el sistema.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"empresaId\": 1,\n  \"nombre\": \"Proveedor Tech S.A.\",\n  \"nit\": \"987654321-1\",\n  \"direccion\": \"Calle 456 #78-90\",\n  \"telefono\": \"3009876543\",\n  \"correo\": \"contacto@proveedor.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Actualizar Proveedor",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/proveedores/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "proveedores",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Actualiza los datos de un proveedor existente.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Proveedor Tech Actualizado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Eliminar Proveedor",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/proveedores/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "proveedores",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Elimina un proveedor del sistema. Solo administradores.",
+              "type": "text/markdown"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Garantías",
+      "item": [
+        {
+          "name": "Listar Garantías",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/garantias",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "garantias"
+              ]
+            },
+            "description": {
+              "content": "Obtiene todas las garantías del sistema.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Garantía por Activo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/garantias/activo/:activoId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "garantias",
+                "activo",
+                ":activoId"
+              ]
+            },
+            "description": {
+              "content": "Obtiene la garantía asociada a un activo específico.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Obtener Garantía",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/garantias/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "garantias",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Obtiene una garantía específica por su ID.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Crear Garantía",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/garantias",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "garantias"
+              ]
+            },
+            "description": {
+              "content": "Crea una nueva garantía para un activo.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activoId\": 1,\n  \"proveedorId\": 1,\n  \"fechaInicio\": \"2024-01-15\",\n  \"fechaFin\": \"2025-01-15\",\n  \"descripcion\": \"Garantía de 1 año en partes y mano de obra\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Actualizar Garantía",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/garantias/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "garantias",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Actualiza los datos de una garantía existente.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descripcion\": \"Garantía actualizada\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Eliminar Garantía",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/garantias/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "garantias",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Elimina una garantía del sistema. Solo administradores.",
+              "type": "text/markdown"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Historial de Activos",
+      "item": [
+        {
+          "name": "Listar Historial",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/historial-activos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "historial-activos"
+              ]
+            },
+            "description": {
+              "content": "Obtiene todo el historial de cambios de activos.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Historial por Activo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/historial-activos/activo/:activoId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "historial-activos",
+                "activo",
+                ":activoId"
+              ]
+            },
+            "description": {
+              "content": "Obtiene el historial completo de cambios de un activo específico.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Obtener Registro",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/historial-activos/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "historial-activos",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Obtiene un registro específico del historial por su ID.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Crear Registro",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/historial-activos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "historial-activos"
+              ]
+            },
+            "description": {
+              "content": "Crea un nuevo registro en el historial de un activo.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activoId\": 1,\n  \"usuarioId\": 1,\n  \"tipoCambio\": \"actualizacion\",\n  \"descripcion\": \"Se actualizó el valor del activo\",\n  \"responsableAnteriorId\": 1,\n  \"responsableNuevoId\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Depreciación de Activos",
+      "item": [
+        {
+          "name": "Listar Depreciaciones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/depreciacion-activos?activoId=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "depreciacion-activos?activoId=1"
+              ]
+            },
+            "description": {
+              "content": "Obtiene todas las depreciaciones. Puede filtrarse por activoId.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Obtener Depreciación",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/depreciacion-activos/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "depreciacion-activos",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Obtiene una depreciación específica por su ID.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Crear Depreciación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/depreciacion-activos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "depreciacion-activos"
+              ]
+            },
+            "description": {
+              "content": "Crea un nuevo registro de depreciación para un activo.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activoId\": 1,\n  \"fechaCalculo\": \"2024-01-15\",\n  \"valorAnterior\": 1500000,\n  \"valorDepreciado\": 1350000,\n  \"porcentajeDepreciacion\": 10,\n  \"metodo\": \"lineal\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Actualizar Depreciación",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/depreciacion-activos/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "depreciacion-activos",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Actualiza los datos de una depreciación existente.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"valorDepreciado\": 1300000,\n  \"porcentajeDepreciacion\": 13.33\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Eliminar Depreciación",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/depreciacion-activos/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "depreciacion-activos",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Elimina una depreciación del sistema. Solo administradores.",
+              "type": "text/markdown"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Activos-Proveedores",
+      "item": [
+        {
+          "name": "Listar Relaciones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/activos-proveedores?activoId=1&proveedorId=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "activos-proveedores?activoId=1&proveedorId=1"
+              ]
+            },
+            "description": {
+              "content": "Obtiene todas las relaciones activo-proveedor. Puede filtrarse por activoId o proveedorId.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Obtener Relación",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/activos-proveedores/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "activos-proveedores",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Obtiene una relación específica por su ID.",
+              "type": "text/markdown"
+            }
+          }
+        },
+        {
+          "name": "Crear Relación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/activos-proveedores",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "activos-proveedores"
+              ]
+            },
+            "description": {
+              "content": "Crea una nueva relación entre un activo y un proveedor.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activoId\": 1,\n  \"proveedorId\": 1,\n  \"fechaCompra\": \"2024-01-15\",\n  \"precioCompra\": 1500000,\n  \"numeroFactura\": \"FAC-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Actualizar Relación",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/activos-proveedores/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "activos-proveedores",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Actualiza los datos de una relación existente.",
+              "type": "text/markdown"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"precioCompra\": 1450000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Eliminar Relación",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/activos-proveedores/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "activos-proveedores",
+                ":id"
+              ]
+            },
+            "description": {
+              "content": "Elimina una relación activo-proveedor del sistema. Solo administradores.",
+              "type": "text/markdown"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

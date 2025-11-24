@@ -18,6 +18,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { AdminSistemaUtil } from '../../common/utils/admin-sistema.util';
 
 @ApiTags('Asignaciones')
 @ApiBearerAuth()
@@ -47,10 +48,14 @@ export class AsignacionesController {
   findAll(
     @Query('activoId') activoId?: string,
     @Query('empleadoId') empleadoId?: string,
+    @Query('empresaId') empresaId?: string,
+    @CurrentUser() user?: any,
   ) {
+    const empresaIdFilter = AdminSistemaUtil.getEmpresaIdFilter(user, empresaId);
     return this.asignacionesService.findAll(
       activoId ? parseInt(activoId, 10) : undefined,
       empleadoId ? parseInt(empleadoId, 10) : undefined,
+      empresaIdFilter,
     );
   }
 

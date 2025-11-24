@@ -18,6 +18,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { AdminSistemaUtil } from '../../common/utils/admin-sistema.util';
 
 @ApiTags('Proveedores')
 @ApiBearerAuth()
@@ -41,9 +42,7 @@ export class ProveedoresController {
     @Query('empresaId') empresaId?: string,
     @CurrentUser() user?: any,
   ) {
-    const empresaIdFilter = empresaId
-      ? parseInt(empresaId, 10)
-      : user?.empresaId;
+    const empresaIdFilter = AdminSistemaUtil.getEmpresaIdFilter(user, empresaId);
     return this.proveedoresService.findAll(empresaIdFilter);
   }
 

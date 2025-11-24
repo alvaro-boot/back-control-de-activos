@@ -12,6 +12,7 @@ import { Categoria } from '../../categorias/entities/categoria.entity';
 import { Sede } from '../../sedes/entities/sede.entity';
 import { Area } from '../../areas/entities/area.entity';
 import { Usuario } from '../../usuarios/entities/usuario.entity';
+import { Empleado } from '../../empleados/entities/empleado.entity';
 import { ActivoQr } from '../../activos-qr/entities/activo-qr.entity';
 import { HistorialActivo } from '../../historial-activos/entities/historial-activo.entity';
 import { Mantenimiento } from '../../mantenimientos/entities/mantenimiento.entity';
@@ -19,6 +20,7 @@ import { MantenimientoProgramado } from '../../mantenimientos-programados/entiti
 import { Garantia } from '../../garantias/entities/garantia.entity';
 import { ActivoProveedor } from '../../activos-proveedores/entities/activo-proveedor.entity';
 import { DepreciacionActivo } from '../../depreciacion-activos/entities/depreciacion-activo.entity';
+import { Asignacion } from '../../asignaciones/entities/asignacion.entity';
 
 export enum EstadoActivo {
   ACTIVO = 'activo',
@@ -91,9 +93,9 @@ export class Activo {
   @JoinColumn({ name: 'area_id' })
   area: Area;
 
-  @ManyToOne(() => Usuario, (usuario) => usuario.activosResponsable, { nullable: true })
+  @ManyToOne(() => Empleado, { nullable: true })
   @JoinColumn({ name: 'responsable_id' })
-  responsable: Usuario;
+  responsable: Empleado;
 
   @OneToMany(() => ActivoQr, (qr) => qr.activo)
   qr: ActivoQr[];
@@ -115,4 +117,7 @@ export class Activo {
 
   @OneToMany(() => DepreciacionActivo, (dep) => dep.activo)
   depreciaciones: DepreciacionActivo[];
+
+  @OneToMany(() => Asignacion, (asignacion) => asignacion.activo)
+  asignaciones: Asignacion[];
 }
