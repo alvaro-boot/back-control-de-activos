@@ -39,8 +39,7 @@ lerna-debug.log*
 .env.local
 .env.*.local
 
-# Config YAML (no incluir config.yaml con secrets)
-config.yaml
+
 
 # QR Images
 uploads/qr/

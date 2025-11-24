@@ -1,0 +1,56 @@
+# Configuración del Sistema de Control de Activos
+# Ajusta los valores según tu entorno
+
+# Configuración del servidor
+server:
+  port: 3000
+  nodeEnv: development # development | production
+
+# Configuración de la base de datos MySQL
+database:
+  host: tramway.proxy.rlwy.net
+  port: 40551
+  username: root
+  password: "nGEbdRqEABbLjPctVaUUzdtGdvhwszCC"
+  database: railway
+
+# Configuración de JWT
+jwt:
+  secret: "cambiar-este-secret-en-produccion-por-uno-mas-seguro"
+  expiresIn: "1h"
+  refreshSecret: "cambiar-este-refresh-secret-en-produccion-por-uno-mas-seguro"
+  refreshExpiresIn: "7d"
+
+# Configuración de QR
+qr:
+  baseUrl: "http://localhost:3000/qr/activo"
+
+# Configuración del Frontend (para enlaces de recuperación de contraseña, etc.)
+frontend:
+  url: "http://localhost:3001" # URL base de tu aplicación frontend
+
+# Configuración de Email
+# Opciones:
+# 1. Ethereal Email (automático en desarrollo, sin configuración)
+# 2. Gmail (requiere App Password)
+# 3. Resend (requiere API Key)
+# 4. SMTP personalizado
+email:
+  provider: "gmail"
+  from: "prismadevcol@gmail.com"
+  fromName: "PrismaAsset360"
+  user: "prismadevcol@gmail.com" # ⚠️ REEMPLAZA con tu correo de Gmail
+  password: "http hhdl przn rwxn" # App Password (sin espacios) - Debe tener 16 caracteres. Si la contraseña mostrada es "http hhdl przn rwxn", prueba: "hhdlprznrwxn" o "http hhdl przn rwxn" sin espacios
+  
+  # Para Resend (gratis: 3,000 emails/mes):
+  # provider: "resend"
+  # apiKey: "re_xxxxxxxxxxxxx" # Obtener en: https://resend.com/api-keys
+  
+  # Para SMTP personalizado:
+  # provider: "smtp"
+  # host: "smtp.ejemplo.com"
+  # port: 587
+  # secure: false # true para puerto 465
+  # user: "usuario@smtp.ejemplo.com"
+  # password: "tu-contraseña"
+
