@@ -179,23 +179,21 @@ export class AuthService {
     const frontendUrl = this.configService.get<string>('frontend.url') || 'http://localhost:3001';
     const resetLink = `${frontendUrl}/reset-password?token=${token}`;
 
-    // Enviar email con el enlace de recuperación
-    try {
-      await this.emailService.sendPasswordResetEmail(
-        usuario.correo,
-        resetLink,
-        usuario.nombreCompleto,
-      );
+    // Enviar email con el enlace de recuperación de forma asíncrona (no bloquea la respuesta)
+    this.emailService.sendPasswordResetEmail(
+      usuario.correo,
+      resetLink,
+      usuario.nombreCompleto,
+    ).then(() => {
       this.logger.log(`Email de recuperación enviado a ${correo}`);
-    } catch (error) {
+    }).catch((error) => {
       this.logger.error(`Error al enviar email de recuperación: ${error.message}`);
       // En desarrollo, mostrar el enlace en los logs como fallback
       const nodeEnv = this.configService.get<string>('server.nodeEnv');
       if (nodeEnv === 'development') {
         this.logger.warn(`Enlace de recuperación (fallback): ${resetLink}`);
       }
-      // No lanzar error para evitar exponer información
-    }
+    });
   }
 
   async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<void> {
