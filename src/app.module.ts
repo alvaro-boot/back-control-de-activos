@@ -7,6 +7,7 @@ import { join } from 'path';
 
 import { getDatabaseConfig } from './config/database.config';
 import envConfig from './config/env.config';
+import { AppController } from './app.controller';
 
 // Módulos
 import { AuthModule } from './modules/auth/auth.module';
@@ -35,6 +36,7 @@ import { ReportesModule } from './modules/reportes/reportes.module';
 import { EmailModule } from './common/services/email.module';
 
 @Module({
+  controllers: [AppController],
   imports: [
     // Configuración
     ConfigModule.forRoot({

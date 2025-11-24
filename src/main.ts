@@ -15,6 +15,20 @@ async function bootstrap() {
     credentials: true,
   });
 
+  // Health check en la raíz (antes del prefijo global)
+  app.getHttpAdapter().get('/', (req, res) => {
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      service: 'Control de Activos API',
+      version: '1.0.0',
+    });
+  });
+
+  app.getHttpAdapter().head('/', (req, res) => {
+    res.status(200).end();
+  });
+
   // Prefijo global para todas las rutas
   app.setGlobalPrefix('api');
 
