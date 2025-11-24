@@ -26,18 +26,35 @@ export class EmailService {
         throw new Error('App Password de Gmail inválida');
       }
       
-      this.transporter = nodemailer.createTransport({
-        service: 'gmail',
+      // Usar configuración SMTP directa en lugar del servicio 'gmail' para mejor compatibilidad con Render
+      const smtpConfig: any = {
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false, // true para 465, false para otros puertos
         auth: {
           user: emailConfig.user,
           pass: appPassword, // App Password sin espacios
         },
-        // Agregar opciones de timeout
-        connectionTimeout: 10000, // 10 segundos
-        greetingTimeout: 10000,
-        socketTimeout: 10000,
-      });
-      this.logger.log(`Gmail configurado para envío de emails. Usuario: ${emailConfig.user}`);
+        // Timeouts más largos para Render y conexiones lentas
+        connectionTimeout: 60000, // 60 segundos
+        greetingTimeout: 30000,
+        socketTimeout: 60000,
+        // Usar TLS explícito
+        requireTLS: true,
+        tls: {
+          // No rechazar certificados no autorizados (necesario en algunos entornos)
+          rejectUnauthorized: false,
+        },
+      };
+      
+      // Opciones de debug (solo en desarrollo)
+      if (nodeEnv === 'development') {
+        smtpConfig.debug = true;
+        smtpConfig.logger = true;
+      }
+      
+      this.transporter = nodemailer.createTransport(smtpConfig);
+      this.logger.log(`Gmail configurado para envío de emails (SMTP directo). Usuario: ${emailConfig.user}`);
       
       // Verificar conexión en background (no bloquea)
       this.verifyConnection().catch(() => {
@@ -112,10 +129,10 @@ export class EmailService {
 
       this.logger.debug(`Intentando enviar email a ${options.to} desde ${fromEmail}`);
       
-      // Agregar timeout al envío
+      // Agregar timeout al envío (60 segundos para conexiones lentas en Render)
       const sendPromise = this.transporter.sendMail(mailOptions);
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout al enviar email')), 30000)
+        setTimeout(() => reject(new Error('Timeout al enviar email')), 60000)
       );
       
       const info = await Promise.race([sendPromise, timeoutPromise]) as any;
@@ -222,10 +239,10 @@ export class EmailService {
     if (!this.transporter) return;
     
     try {
-      // Timeout de 5 segundos para la verificación
+      // Timeout de 15 segundos para la verificación (más tiempo para Render)
       const verifyPromise = this.transporter.verify();
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout')), 5000)
+        setTimeout(() => reject(new Error('Timeout')), 15000)
       );
       
       await Promise.race([verifyPromise, timeoutPromise]);
