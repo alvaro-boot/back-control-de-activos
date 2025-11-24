@@ -18,23 +18,31 @@ export class EmailService {
 
     // Si hay configuración de Gmail, usarla (incluso en desarrollo)
     if (emailConfig?.provider === 'gmail') {
+      // Eliminar espacios de la App Password (Gmail las genera con espacios pero no deben usarse)
+      const appPassword = (emailConfig.password || '').replace(/\s+/g, '');
+      
+      if (!appPassword || appPassword.length !== 16) {
+        this.logger.error(`App Password de Gmail inválida. Debe tener exactamente 16 caracteres sin espacios.`);
+        throw new Error('App Password de Gmail inválida');
+      }
+      
       this.transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
           user: emailConfig.user,
-          pass: emailConfig.password, // Debe ser una "App Password" de Gmail
+          pass: appPassword, // App Password sin espacios
         },
+        // Agregar opciones de timeout
+        connectionTimeout: 10000, // 10 segundos
+        greetingTimeout: 10000,
+        socketTimeout: 10000,
       });
       this.logger.log(`Gmail configurado para envío de emails. Usuario: ${emailConfig.user}`);
       
-      // Verificar conexión
-      try {
-        await this.transporter.verify();
-        this.logger.log('Conexión con Gmail verificada exitosamente');
-      } catch (error) {
-        this.logger.error(`Error al verificar conexión con Gmail: ${error.message}`);
-        this.logger.warn('El envío de emails puede fallar. Verifica tu App Password.');
-      }
+      // Verificar conexión en background (no bloquea)
+      this.verifyConnection().catch(() => {
+        // Error ya manejado en verifyConnection
+      });
       
     } else if (emailConfig?.provider === 'resend') {
       this.transporter = nodemailer.createTransport({
@@ -86,6 +94,10 @@ export class EmailService {
     html: string;
     text?: string;
   }): Promise<void> {
+    if (!this.transporter) {
+      throw new Error('Servicio de email no inicializado');
+    }
+
     try {
       const fromEmail = this.configService.get<string>('email.from') || 'noreply@controlactivos.com';
       const fromName = this.configService.get<string>('email.fromName') || 'Sistema de Control de Activos';
@@ -99,7 +111,14 @@ export class EmailService {
       };
 
       this.logger.debug(`Intentando enviar email a ${options.to} desde ${fromEmail}`);
-      const info = await this.transporter.sendMail(mailOptions);
+      
+      // Agregar timeout al envío
+      const sendPromise = this.transporter.sendMail(mailOptions);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout al enviar email')), 30000)
+      );
+      
+      const info = await Promise.race([sendPromise, timeoutPromise]) as any;
 
       const nodeEnv = this.configService.get<string>('server.nodeEnv');
       if (nodeEnv === 'development') {
@@ -197,6 +216,27 @@ export class EmailService {
 </body>
 </html>
     `;
+  }
+
+  private async verifyConnection() {
+    if (!this.transporter) return;
+    
+    try {
+      // Timeout de 5 segundos para la verificación
+      const verifyPromise = this.transporter.verify();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 5000)
+      );
+      
+      await Promise.race([verifyPromise, timeoutPromise]);
+      this.logger.log('Conexión con Gmail verificada exitosamente');
+    } catch (error: any) {
+      if (error.message === 'Timeout') {
+        this.logger.warn('Verificación de conexión con Gmail timeout. El envío de emails se intentará de todas formas.');
+      } else {
+        this.logger.warn(`Error al verificar conexión con Gmail: ${error.message}. El envío de emails se intentará de todas formas.`);
+      }
+    }
   }
 
   private htmlToText(html: string): string {
