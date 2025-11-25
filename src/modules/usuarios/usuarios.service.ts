@@ -41,9 +41,21 @@ export class UsuariosService {
 
   async findAll(empresaId?: number): Promise<Usuario[]> {
     const where = empresaId ? { empresaId } : {};
-    return this.usuarioRepository.find({
+    const usuarios = await this.usuarioRepository.find({
       where,
       relations: ['rol', 'empresa', 'area', 'area.sede'],
+    });
+    
+    // Log para depuración
+    if (usuarios.length > 0) {
+      this.logger.debug(`Usuarios encontrados: ${usuarios.length}`);
+      this.logger.debug(`Primer usuario rol: ${JSON.stringify(usuarios[0].rol)}`);
+    }
+    
+    // Excluir la contraseña y asegurar que el rol se incluya
+    return usuarios.map((usuario) => {
+      const { contrasena, ...usuarioSinPassword } = usuario;
+      return usuarioSinPassword as Usuario;
     });
   }
 
