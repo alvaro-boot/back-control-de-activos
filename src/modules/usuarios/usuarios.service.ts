@@ -29,7 +29,13 @@ export class UsuariosService {
       throw new BadRequestException('El correo ya está registrado');
     }
 
-    const usuario = this.usuarioRepository.create(createUsuarioDto);
+    // Hashear la contraseña antes de guardar
+    const hashedPassword = await PasswordUtil.hash(createUsuarioDto.contrasena);
+    
+    const usuario = this.usuarioRepository.create({
+      ...createUsuarioDto,
+      contrasena: hashedPassword,
+    });
     return this.usuarioRepository.save(usuario);
   }
 

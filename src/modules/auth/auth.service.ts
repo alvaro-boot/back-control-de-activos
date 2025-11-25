@@ -79,12 +79,8 @@ export class AuthService {
       throw new BadRequestException('El correo ya está registrado');
     }
 
-    const hashedPassword = await PasswordUtil.hash(registerDto.contrasena);
-
-    const usuario = await this.usuariosService.create({
-      ...registerDto,
-      contrasena: hashedPassword,
-    });
+    // El método create de UsuariosService ya hashea la contraseña automáticamente
+    const usuario = await this.usuariosService.create(registerDto);
 
     return this.generateTokens(usuario);
   }
